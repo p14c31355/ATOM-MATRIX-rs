@@ -1,0 +1,12 @@
+[build]
+target = "xtensa-esp32-none-elf"
+
+[unstable]
+build-std = ["core", "compiler_builtins", "alloc"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+strip = true
+opt-level = "z"
