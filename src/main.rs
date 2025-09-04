@@ -13,41 +13,36 @@ use embedded_graphics::{
 
 use sh1107g_rs::{Sh1107g, Sh1107gBuilder};
 
-// esp-hal 1.0
-use esp_hal::{
-    clock::ClockControl,
-    i2c::I2c,
-    peripherals::Peripherals,
-    system::SystemExt,
-    gpio::IO,
-};
+// esp-hal 1.0.0-rc.0用
+use esp_hal::peripherals::Peripherals;
+use esp_hal::clock::ClockControl;
+use esp_hal::i2c::master::{I2c, self};
+use esp_hal::gpio::{GpioPin, Input, Output, PushPull};
+use fugit::RateExtU32;
+use core::convert::Infallible;
 
-use fugit::RateExtU32; // trait をスコープに入れる
-
-#[entry]
-fn main() -> ! {
+#[no_mangle]
+pub extern "C" fn main() -> ! {
     // --- ペリフェラル取得 ---
-    let peripherals = unsafe { Peripherals::steal() };
+    let peripherals = Peripherals::take();
 
     // --- クロック設定 ---
-    let mut system = peripherals.SYSTEM.split();
+    let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
-    // --- GPIO/ピン設定 ---
-    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-
-    // SDA / SCL ピン設定
-    let sda = io.pins.gpio21;
-    let scl = io.pins.gpio22;
+    // --- GPIO / ピン設定 ---
+    let io = esp_hal::gpio::io::Io::new(peripherals.GPIO, peripherals.IO_MUX);
+    let sda: GpioPin<Input<PullDown>, 21> = io.pins.gpio21;
+    let scl: GpioPin<Input<PullDown>, 22> = io.pins.gpio22;
 
     // --- I2C 初期化 ---
     let i2c = I2c::new(
         peripherals.I2C0,
-        sda,
-        scl,
-        100_000u32.Hz(), // 100kHz
+        i2c::Config::new().baudrate(100.kHz().into()),
+        sda.into_open_drain_output(),
+        scl.into_open_drain_output(),
         &clocks,
-    );
+    ).unwrap();
 
     // --- SH1107G 初期化 ---
     let mut display = Sh1107gBuilder::new(i2c)
