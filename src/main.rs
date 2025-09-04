@@ -12,20 +12,20 @@ use embedded_graphics::{
 use sh1107g_rs::Sh1107gBuilder;
 
 use esp_idf_hal::{i2c::{I2cConfig, I2cDriver}, peripherals::Peripherals};
-use esp_idf_sys as _; // 必須: esp-idf std 環境で初期化パッチをロード
+// use esp_idf_sys as _; // 必須: esp-idf std 環境で初期化パッチをロード
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     // ESP-IDF std 環境用初期化
     esp_idf_sys::link_patches();
 
     // --- I2C 初期化 ---
     let peripherals = Peripherals::take().unwrap();
     let config = I2cConfig::default();
-    let mut i2c = I2cDriver::new(peripherals.i2c0, peripherals.pins.gpio21, peripherals.pins.gpio22, &config).unwrap();
+    let mut i2c = I2cDriver::new(peripherals.i2c0, peripherals.pins.gpio21, peripherals.pins.gpio22, &config)?;
 
     // --- SH1107G 初期化 ---
     let mut display = Sh1107gBuilder::new(&mut i2c)
-        .with_address(0x3C)
+        // .with_address(0x3C)
         // .clear_on_init(true)
         .build();
 

@@ -1,5 +1,5 @@
 [package]
-name = "atommatrix"
+name = "ATOM-MATRIX-rs"
 version = "0.1.0"
 authors = ["Placeless <thinkoverheat@gmail.com>"]
 edition = "2024"
@@ -7,7 +7,8 @@ resolver = "2"
 rust-version = "1.88"
 
 [[bin]]
-name = "atommatrix"
+name = "ATOM-MATRIX-rs"
+path = "src/main.rs"
 harness = false # do not use the built in cargo test harness -> resolve rust-analyzer errors
 
 [profile.release]
@@ -29,6 +30,7 @@ esp-idf-hal = "0.45.2" # Add esp-idf-hal dependency
 esp-idf-sys = "0.36.1"
 embedded-graphics = "0.8.1"
 sh1107g-rs = { path = "/home/placeless/sh1107g-rs" }
+anyhow = "1.0.99"
 
 # --- Optional Embassy Integration ---
 # esp-idf-svc = { version = "0.51", features = ["critical-section", "embassy-time-driver", "embassy-sync"] }
