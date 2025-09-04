@@ -1,7 +1,6 @@
-#![no_std]
-#![no_main]
+use std::thread;
+use std::time::Duration;
 
-use panic_halt as _;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13_BOLD, MonoTextStyle},
     pixelcolor::BinaryColor,
@@ -12,28 +11,22 @@ use embedded_graphics::{
 
 use sh1107g_rs::Sh1107gBuilder;
 
-use esp_hal::i2c::master::I2c;
-use esp_hal::i2c::master::Config;
-use esp_hal::clock::CpuClock; // CpuClockをインポート
-use xtensa_lx_rt::entry;
+use esp_idf_hal::{i2c::{I2cConfig, I2cDriver}, peripherals::Peripherals};
+use esp_idf_sys as _; // 必須: esp-idf std 環境で初期化パッチをロード
 
-#[entry]
-fn main() -> ! {
-    // --- ペリフェラル取得 ---
-    // --- クロック設定 ---
-    let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
-    let peripherals = esp_hal::init(config);
+fn main() {
+    // ESP-IDF std 環境用初期化
+    esp_idf_sys::link_patches();
 
     // --- I2C 初期化 ---
-    let mut i2c = I2c::new(
-        peripherals.I2C0,
-        Config::default(), // Config::new() を Config::default() に変更
-    ).unwrap();
+    let peripherals = Peripherals::take().unwrap();
+    let config = I2cConfig::default();
+    let mut i2c = I2cDriver::new(peripherals.i2c0, peripherals.pins.gpio21, peripherals.pins.gpio22, &config).unwrap();
 
     // --- SH1107G 初期化 ---
     let mut display = Sh1107gBuilder::new(&mut i2c)
         .with_address(0x3C)
-        .clear_on_init(true)
+        // .clear_on_init(true)
         .build();
 
     display.init().unwrap();
@@ -56,5 +49,7 @@ fn main() -> ! {
 
     display.flush().unwrap();
 
-    loop {}
+    loop {
+        thread::sleep(Duration::from_secs(1));
+    }
 }
