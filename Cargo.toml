@@ -7,19 +7,12 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 embedded-graphics = { version = "0.8.1", default-features = false }
-esp-backtrace = { version = "0.17.0", features = [
-    "esp32",
-    "exception-handler",
-    "panic-handler",
-    "println",
-] }
-esp-hal = { version = "0.23.1", features = [ "esp32" ] }
-esp-println = { version = "0.12.0", features = ["esp32", "log"] }
+esp-hal = { version = "0.23.1", features = [ "esp32", "default" ] }
 log = { version = "0.4.22" }
 embedded-hal = "1.0.0"
 embedded-io = "0.6.1"
-panic-abort = "0.3.2"
 panic-halt = "1.0.0"
+xtensa-lx-rt = "0.20.0"
 
 [dependencies.sh1107g-rs]
 path = "../sh1107g-rs"
@@ -33,4 +26,4 @@ lto = true
 strip = true
 opt-level = 'z'
 overflow-checks = false
-panic = "abort"
+panic = "abort" # panic-haltを使用するため、この設定は維持
