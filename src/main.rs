@@ -1,22 +1,7 @@
 #![no_std]
 #![no_main]
-use fugit::rate::ExtU32;
 
-use esp_hal::{
-    clock::ClockControl,
-    gpio::Io,
-    i2c::I2c,
-    prelude::*,
-    system::SystemControl,
-};
 use panic_halt as _;
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-use esp_backtrace as _; 
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13_BOLD, MonoTextStyle},
@@ -28,24 +13,43 @@ use embedded_graphics::{
 
 use sh1107g_rs::{Sh1107g, Sh1107gBuilder};
 
-#[unsefe(no_mangle)]
+// esp-hal 1.0
+use esp_hal::{
+    clock::ClockControl,
+    i2c::I2c,
+    peripherals::Peripherals,
+    system::SystemExt,
+    gpio::IO,
+};
+
+use fugit::RateExtU32; // trait をスコープに入れる
+
+#[entry]
 fn main() -> ! {
-    // 初期化（クロック & ペリフェラル取得）
-    let peripherals = pac::Peripherals::take().unwrap();
-let system = peripherals.system.split(); // HAL ラッパーを使う
-let io = peripherals.iomux.split();     // GPIO/IO_MUX を安全に取得
+    // --- ペリフェラル取得 ---
+    let peripherals = unsafe { Peripherals::steal() };
 
+    // --- クロック設定 ---
+    let mut system = peripherals.SYSTEM.split();
+    let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
-    // I2C 初期化 (SDA=21, SCL=22 → ATOM Matrix のデフォルト)
-    let i2c = I2C::new(
-    peripherals.I2C0,
-    pins.sda,
-    pins.scl,
-    100000_u32.Hz(), // 型明示
-);
+    // --- GPIO/ピン設定 ---
+    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
 
+    // SDA / SCL ピン設定
+    let sda = io.pins.gpio21;
+    let scl = io.pins.gpio22;
 
-    // SH1107G ドライバ初期化
+    // --- I2C 初期化 ---
+    let i2c = I2c::new(
+        peripherals.I2C0,
+        sda,
+        scl,
+        100_000u32.Hz(), // 100kHz
+        &clocks,
+    );
+
+    // --- SH1107G 初期化 ---
     let mut display = Sh1107gBuilder::new(i2c)
         .with_address(0x3C)
         .clear_on_init(true)
@@ -53,7 +57,7 @@ let io = peripherals.iomux.split();     // GPIO/IO_MUX を安全に取得
 
     display.init().unwrap();
 
-    // 描画例
+    // --- 描画 ---
     Rectangle::new(Point::new(10, 10), Size::new(100, 50))
         .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1))
         .draw(&mut display)
@@ -69,7 +73,6 @@ let io = peripherals.iomux.split();     // GPIO/IO_MUX を安全に取得
         .draw(&mut display)
         .unwrap();
 
-    // 一度だけ flush
     display.flush().unwrap();
 
     loop {}
