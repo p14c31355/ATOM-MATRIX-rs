@@ -4,10 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-embedded-graphics = "0.8.1"
+embedded-graphics = { version = "0.8.1", default-features = false }
+esp-hal = { git = "https://github.com/esp-rs/esp-hal.git", features = ["esp32"] }
 embedded-hal = "1.0.0"
 embedded-io = "0.6.1"
 panic-abort = "0.3.2"
+esp-backtrace = { version = "0.17.0", features = ["println"] }
+esp-println   = { version = "0.15.0", features = ["esp32"] }
+fugit = "0.3.7"
+panic-halt = "1.0.0"
 
 [dependencies.sh1107g-rs]
 path = "../sh1107g-rs"
